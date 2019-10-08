@@ -7,11 +7,11 @@ void MeGlWindow::initializeGL()
 
 	GLfloat verts[] =
 	{
-		+0.0f, +0.0f,
-		+1.0f, +1.0f,
-		-1.0f, +1.0f,
-		-1.0f, -1.0f,
-		+1.0f, -1.0f,
+		+0.0f, +0.0f, +0.0f, +0.0f, +0.0f,
+		+1.0f, +1.0f, +0.0f, +0.0f, +0.0f,
+		-1.0f, +1.0f, +0.0f, +0.0f, +0.0f,
+		-1.0f, -1.0f, +0.0f, +0.0f, +0.0f,
+		+1.0f, -1.0f, +0.0f, +0.0f, +0.0f,
 	};
 
 	GLuint myBufferID;
@@ -28,10 +28,17 @@ void MeGlWindow::initializeGL()
 	// in order to openGL to send the data from the RAM in the grphics card to pipeline, tell openGL to enable that attribute
 	glEnableVertexAttribArray(0);
 
-	// tell openGL what that data means. 버텍스당 2 float.
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	// tell openGL what that data means. 버텍스당 2 float. 
+	// stride is the distance and bytes between vertex attributes. attribute 시작점 간의 간격
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
 
-	GLushort indices[] = { 3,1,2, 0,3,4 };
+	// for color attribute
+	glEnableVertexAttribArray(1);
+
+	// 마지막 변수는 해당데이터의 시작점으로 가려면 몇바이트를 지나쳐야 하나.
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (char*)(sizeof(float) * 2));
+
+	GLushort indices[] = { 0,1,2, 0,3,4 };
 	GLuint indexBufferID;
 
 	// gen another buffer and bind to another point. 
