@@ -10,8 +10,6 @@ void MeGlWindow::initializeGL()
 		+0.0f, +0.0f,
 		+1.0f, +1.0f,
 		-1.0f, +1.0f,
-
-		+0.0f, +0.0f,
 		-1.0f, -1.0f,
 		+1.0f, -1.0f,
 	};
@@ -32,13 +30,22 @@ void MeGlWindow::initializeGL()
 
 	// tell openGL what that data means. 버텍스당 2 float.
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	GLushort indices[] = { 3,1,2, 0,3,4 };
+	GLuint indexBufferID;
+
+	// gen another buffer and bind to another point. 
+	glGenBuffers(1, &indexBufferID);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
+
+	// send data to buffer that bound to GL_ELEMENT_ARRAY_BUFFER |||||-[]----* 간단히 indices[]를 copy to memory 
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }
 
 void MeGlWindow::paintGL()
 {
 	// Update도므로 윈도우창 크기 변경하면 같이 변함.
 	glViewport(0, 0, width(), height());
-
-	// go get that data and draw
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 }
