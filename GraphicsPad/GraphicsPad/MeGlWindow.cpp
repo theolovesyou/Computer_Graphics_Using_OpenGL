@@ -1,17 +1,24 @@
 #include <gl\glew.h>
 #include <MeGlWindow.h>
 
-void MeGlWindow::initializeGL()
-{
-	glewInit();
+extern const char* vertexShaderCode;
+extern const char* fragmentShaderCode;
 
+void sendDataToOpenGL()
+{
+	// 정점정보에서 색상정보를 추가해도 fragment shader 처리를 해줘야 색상이 바뀐다.
 	GLfloat verts[] =
 	{
-		+0.0f, +0.0f, +0.0f, +0.0f, +0.0f,
-		+1.0f, +1.0f, +0.0f, +0.0f, +0.0f,
-		-1.0f, +1.0f, +0.0f, +0.0f, +0.0f,
-		-1.0f, -1.0f, +0.0f, +0.0f, +0.0f,
-		+1.0f, -1.0f, +0.0f, +0.0f, +0.0f,
+		+0.0f, +0.0f,
+		+1.0f, +0.0f, +0.0f,
+		+1.0f, +1.0f,
+		+1.0f, +0.0f, +0.0f,
+		-1.0f, +1.0f,
+		+1.0f, +0.0f, +0.0f,
+		-1.0f, -1.0f,
+		+1.0f, +0.0f, +0.0f,
+		+1.0f, -1.0f,
+		+1.0f, +0.0f, +0.0f,
 	};
 
 	GLuint myBufferID;
@@ -47,6 +54,41 @@ void MeGlWindow::initializeGL()
 
 	// send data to buffer that bound to GL_ELEMENT_ARRAY_BUFFER |||||-[]----* 간단히 indices[]를 copy to memory 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+}
+
+void installShaders()
+{
+	// VSO, FSO 생성
+	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+
+	// VSO, FSO를 string과 연결
+	// 마지막 "가 EOF 역할.
+	const char* adapter[1];
+	adapter[0] = vertexShaderCode;
+	glShaderSource(vertexShaderID, 1, adapter, 0);
+	adapter[0] = fragmentShaderCode;
+	glShaderSource(fragmentShaderID, 1, adapter, 0);
+
+	// gl, complile해라
+	glCompileShader(vertexShaderID);
+	glCompileShader(fragmentShaderID);
+
+	// c++ 컴파일 obj 나오면 obj끼리 link 후 exe 생성 같은 개념
+	// Program object 생성
+	GLuint programID = glCreateProgram();
+	glAttachShader(programID, vertexShaderID);
+	glAttachShader(programID, fragmentShaderID);
+	glLinkProgram(programID);
+
+	glUseProgram(programID);
+}
+
+void MeGlWindow::initializeGL()
+{
+	glewInit();
+	sendDataToOpenGL();
+	installShaders();
 }
 
 void MeGlWindow::paintGL()
