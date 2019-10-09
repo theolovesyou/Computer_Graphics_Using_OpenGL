@@ -1,65 +1,57 @@
 #include <gl\glew.h>
-#include <MeGlWindow.h>
 #include <iostream>
 #include <fstream>
+#include <MeGlWindow.h>
 using namespace std;
+
+const float X_DELTA = 0.1f;
+const uint NUM_VERTICES_PER_TRI = 3;
+const uint NUM_FLOATS_PER_VERTICE = 6;
+const uint TRIANGLE_BYTE_SIZE = NUM_VERTICES_PER_TRI * NUM_FLOATS_PER_VERTICE * sizeof(float);
+const uint MAX_TRIS = 20;
+
+uint numTris = 0;
 
 void sendDataToOpenGL()
 {
-	const float RED_TRIANGLE_Z = 0.5;
-	const float BLUE_TRIANGLE_Z = -0.5;
-
-	// 정점정보에서 색상정보를 추가해도 fragment shader 처리를 해줘야 색상이 바뀐다.
-	GLfloat verts[] =
-	{
-		-1.0f, -1.0f, RED_TRIANGLE_Z,
-		+1.0f, +0.0f, +0.0f,
-		+0.0f, +1.0f, RED_TRIANGLE_Z,
-		+1.0f, +0.0f, +0.0f,
-		+1.0f, -1.0f, RED_TRIANGLE_Z,
-		+1.0f, +0.0f, +0.0f,
-
-		-1.0f, +1.0f, BLUE_TRIANGLE_Z,
-		+0.0f, +0.0f, +1.0f,
-		+0.0f, -1.0f, BLUE_TRIANGLE_Z,
-		+0.0f, +0.0f, +1.0f,
-		+1.0f, +1.0f, BLUE_TRIANGLE_Z,
-		+0.0f, +0.0f, +1.0f,
-	};
-
 	GLuint myBufferID;
-
-	// create buffer obj. how many buffers, store logical address
 	glGenBuffers(1, &myBufferID);
-
-	// bind object to GL_ARRAY_BUFFER point.
 	glBindBuffer(GL_ARRAY_BUFFER, myBufferID);
-
-	// GL_ARRAY_BUFFER로 가서 bound된 object 확인 후 address 전달
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-
-	// in order to openGL to send the data from the RAM in the grphics card to pipeline, tell openGL to enable that attribute
+	glBufferData(GL_ARRAY_BUFFER, MAX_TRIS * TRIANGLE_BYTE_SIZE, NULL, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-
-	// tell openGL what that data means. 버텍스당 3 float. 
-	// stride is the distance and bytes between vertex attributes. attribute 시작점 간의 간격
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
-
-	// for color attribute
 	glEnableVertexAttribArray(1);
-
-	// 마지막 변수는 해당데이터의 시작점으로 가려면 몇바이트를 지나쳐야 하나.
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (char*)(sizeof(float) * 3));
 
-	GLushort indices[] = { 0,1,2, 3,4,5, };
-	GLuint indexBufferID;
+}
 
-	// gen another buffer and bind to another point. 
-	glGenBuffers(1, &indexBufferID);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
+void sendAnotherTriToOpenGL()
+{
+	if (numTris == MAX_TRIS)
+		return;
+	const GLfloat THIS_TRI_X = -1 + numTris * X_DELTA;
+	GLfloat thisTri[] =
+	{
+		THIS_TRI_X, 1.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
 
-	// send data to buffer that bound to GL_ELEMENT_ARRAY_BUFFER |||||-[]----* 간단히 indices[]를 copy to memory 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+		THIS_TRI_X + X_DELTA, 1.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+
+		THIS_TRI_X, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f,
+	};
+	glBufferSubData(GL_ARRAY_BUFFER,
+		numTris * TRIANGLE_BYTE_SIZE, TRIANGLE_BYTE_SIZE, thisTri);
+	numTris++;
+}
+
+void MeGlWindow::paintGL()
+{
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glViewport(0, 0, width(), height());
+	sendAnotherTriToOpenGL();
+	glDrawArrays(GL_TRIANGLES, (numTris - 1) * NUM_VERTICES_PER_TRI, NUM_VERTICES_PER_TRI);
 }
 
 bool checkStatus(
@@ -110,7 +102,6 @@ string readShaderCode(const char* fileName)
 
 void installShaders()
 {
-	// VSO, FSO 생성
 	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -128,8 +119,6 @@ void installShaders()
 	if (!checkShaderStatus(vertexShaderID) || !checkShaderStatus(fragmentShaderID))
 		return;
 
-	// c++ 컴파일 obj 나오면 obj끼리 link 후 exe 생성 같은 개념
-	// Program object 생성
 	GLuint programID = glCreateProgram();
 	glAttachShader(programID, vertexShaderID);
 	glAttachShader(programID, fragmentShaderID);
@@ -147,13 +136,4 @@ void MeGlWindow::initializeGL()
 	glEnable(GL_DEPTH_TEST);
 	sendDataToOpenGL();
 	installShaders();
-}
-
-void MeGlWindow::paintGL()
-{
-	glClear(GL_DEPTH_BUFFER_BIT);
-	// Update도므로 윈도우창 크기 변경하면 같이 변함.
-	glViewport(0, 0, width(), height());
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 }
