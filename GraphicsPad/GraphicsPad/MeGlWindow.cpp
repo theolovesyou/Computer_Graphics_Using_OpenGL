@@ -6,14 +6,24 @@ using namespace std;
 
 void sendDataToOpenGL()
 {
+	const float RED_TRIANGLE_Z = 0.5;
+	const float BLUE_TRIANGLE_Z = -0.5;
+
 	// 정점정보에서 색상정보를 추가해도 fragment shader 처리를 해줘야 색상이 바뀐다.
 	GLfloat verts[] =
 	{
-		+0.0f, +1.0f,
+		-1.0f, -1.0f, RED_TRIANGLE_Z,
 		+1.0f, +0.0f, +0.0f,
-		-1.0f, -1.0f,
-		+0.0f, +1.0f, +0.0f,
-		+1.0f, -1.0f,
+		+0.0f, +1.0f, RED_TRIANGLE_Z,
+		+1.0f, +0.0f, +0.0f,
+		+1.0f, -1.0f, RED_TRIANGLE_Z,
+		+1.0f, +0.0f, +0.0f,
+
+		-1.0f, +1.0f, BLUE_TRIANGLE_Z,
+		+0.0f, +0.0f, +1.0f,
+		+0.0f, -1.0f, BLUE_TRIANGLE_Z,
+		+0.0f, +0.0f, +1.0f,
+		+1.0f, +1.0f, BLUE_TRIANGLE_Z,
 		+0.0f, +0.0f, +1.0f,
 	};
 
@@ -31,17 +41,17 @@ void sendDataToOpenGL()
 	// in order to openGL to send the data from the RAM in the grphics card to pipeline, tell openGL to enable that attribute
 	glEnableVertexAttribArray(0);
 
-	// tell openGL what that data means. 버텍스당 2 float. 
+	// tell openGL what that data means. 버텍스당 3 float. 
 	// stride is the distance and bytes between vertex attributes. attribute 시작점 간의 간격
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, 0);
 
 	// for color attribute
 	glEnableVertexAttribArray(1);
 
 	// 마지막 변수는 해당데이터의 시작점으로 가려면 몇바이트를 지나쳐야 하나.
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (char*)(sizeof(float) * 2));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (char*)(sizeof(float) * 3));
 
-	GLushort indices[] = { 0,1,2 };
+	GLushort indices[] = { 0,1,2, 3,4,5, };
 	GLuint indexBufferID;
 
 	// gen another buffer and bind to another point. 
@@ -134,12 +144,14 @@ void installShaders()
 void MeGlWindow::initializeGL()
 {
 	glewInit();
+	glEnable(GL_DEPTH_TEST);
 	sendDataToOpenGL();
 	installShaders();
 }
 
 void MeGlWindow::paintGL()
 {
+	glClear(GL_DEPTH_BUFFER_BIT);
 	// Update도므로 윈도우창 크기 변경하면 같이 변함.
 	glViewport(0, 0, width(), height());
 	//glDrawArrays(GL_TRIANGLES, 0, 6);
