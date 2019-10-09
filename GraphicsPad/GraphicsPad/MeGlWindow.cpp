@@ -1,5 +1,7 @@
 #include <gl\glew.h>
 #include <MeGlWindow.h>
+#include <iostream>
+using namespace std;
 
 extern const char* vertexShaderCode;
 extern const char* fragmentShaderCode;
@@ -56,6 +58,27 @@ void sendDataToOpenGL()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }
 
+bool checkShaderStatus(GLuint shaderID)
+{
+	GLint compileStatus;
+
+	// shaderID 를 pass해서 GL_COMPILE_STATUS를 가져온다.
+	glGetShaderiv(shaderID, GL_COMPILE_STATUS, &compileStatus);
+	if (compileStatus != GL_TRUE)
+	{
+		GLint infoLogLength;
+		glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &infoLogLength);
+		GLchar* buffer = new GLchar[infoLogLength];
+
+		GLsizei bufferSize;
+		glGetShaderInfoLog(shaderID, infoLogLength, &bufferSize, buffer);
+		cout << buffer << endl;
+		delete[] buffer;
+		return false;
+	}
+	return true;
+}
+
 void installShaders()
 {
 	// VSO, FSO 생성
@@ -64,7 +87,7 @@ void installShaders()
 
 	// VSO, FSO를 string과 연결
 	// 마지막 "가 EOF 역할.
-	const char* adapter[1];
+	const GLchar* adapter[1];
 	adapter[0] = vertexShaderCode;
 	glShaderSource(vertexShaderID, 1, adapter, 0);
 	adapter[0] = fragmentShaderCode;
@@ -73,6 +96,9 @@ void installShaders()
 	// gl, complile해라
 	glCompileShader(vertexShaderID);
 	glCompileShader(fragmentShaderID);
+
+	if (!checkShaderStatus(vertexShaderID) || !checkShaderStatus(fragmentShaderID))
+		return;
 
 	// c++ 컴파일 obj 나오면 obj끼리 link 후 exe 생성 같은 개념
 	// Program object 생성
