@@ -1,26 +1,20 @@
 #include <gl\glew.h>
 #include <MeGlWindow.h>
 #include <iostream>
+#include <fstream>
 using namespace std;
-
-extern const char* vertexShaderCode;
-extern const char* fragmentShaderCode;
 
 void sendDataToOpenGL()
 {
 	// 정점정보에서 색상정보를 추가해도 fragment shader 처리를 해줘야 색상이 바뀐다.
 	GLfloat verts[] =
 	{
-		+0.0f, +0.0f,
-		+1.0f, +0.0f, +0.0f,
-		+1.0f, +1.0f,
-		+1.0f, +0.0f, +0.0f,
-		-1.0f, +1.0f,
+		+0.0f, +1.0f,
 		+1.0f, +0.0f, +0.0f,
 		-1.0f, -1.0f,
-		+1.0f, +0.0f, +0.0f,
+		+0.0f, +1.0f, +0.0f,
 		+1.0f, -1.0f,
-		+1.0f, +0.0f, +0.0f,
+		+0.0f, +0.0f, +1.0f,
 	};
 
 	GLuint myBufferID;
@@ -47,7 +41,7 @@ void sendDataToOpenGL()
 	// 마지막 변수는 해당데이터의 시작점으로 가려면 몇바이트를 지나쳐야 하나.
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (char*)(sizeof(float) * 2));
 
-	GLushort indices[] = { 0,1,2, 0,3,4 };
+	GLushort indices[] = { 0,1,2 };
 	GLuint indexBufferID;
 
 	// gen another buffer and bind to another point. 
@@ -91,21 +85,33 @@ bool checkProgramStatus(GLuint programID)
 	return checkStatus(programID, glGetProgramiv, glGetProgramInfoLog, GL_LINK_STATUS);
 }
 
+string readShaderCode(const char* fileName)
+{
+	ifstream meInput(fileName);
+	if (!meInput.good())
+	{
+		cout << "File failed to load..." << fileName;
+		exit(1);
+	}
+	return std::string(
+		std::istreambuf_iterator<char>(meInput),
+		std::istreambuf_iterator<char>());
+}
+
 void installShaders()
 {
 	// VSO, FSO 생성
 	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-	// VSO, FSO를 string과 연결
-	// 마지막 "가 EOF 역할.
 	const GLchar* adapter[1];
-	adapter[0] = vertexShaderCode;
+	string temp = readShaderCode("VertexShaderCode.glsl");
+	adapter[0] = temp.c_str();
 	glShaderSource(vertexShaderID, 1, adapter, 0);
-	adapter[0] = fragmentShaderCode;
+	temp = readShaderCode("FragmentShaderCode.glsl");
+	adapter[0] = temp.c_str();
 	glShaderSource(fragmentShaderID, 1, adapter, 0);
 
-	// gl, complile해라
 	glCompileShader(vertexShaderID);
 	glCompileShader(fragmentShaderID);
 
